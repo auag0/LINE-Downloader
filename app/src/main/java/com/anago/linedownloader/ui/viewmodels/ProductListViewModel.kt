@@ -22,23 +22,11 @@ class ProductListViewModel : ViewModel() {
             .url("https://store.line.me/api/search/sticker?query=$keyword&offset=0&limit=36&type=ALL")
             .header("Accept-Language", Locale.getDefault().language)
             .build()
+        
         okHttpClient.newCall(request).enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful && response.body != null) {
-                    val productItemList: ArrayList<ProductItem> = ArrayList()
-                    val jsonObject = JSONObject(response.body!!.string())
-                    val items = jsonObject.getJSONArray("items")
-                    for (i in 0 until items.length()) {
-                        val item = items.getJSONObject(i)
-                        productItemList.add(
-                            ProductItem(
-                                id = item.getString("id"),
-                                author = item.getString("authorName"),
-                                title = item.getString("title"),
-                                imageUrl = item.getJSONObject("listIcon").getString("src")
-                            )
-                        )
-                    }
+                    val productItemList = parseResponse(response.body!!.string())
                     productItems.postValue(productItemList)
                     loading.postValue(false)
                 }
@@ -50,5 +38,23 @@ class ProductListViewModel : ViewModel() {
                 loading.postValue(false)
             }
         })
+    }
+
+    private fun parseResponse(response: String): ArrayList<ProductItem> {
+        val productItemList: ArrayList<ProductItem> = ArrayList()
+        val jsonObject = JSONObject(response)
+        val items = jsonObject.getJSONArray("items")
+        for (i in 0 until items.length()) {
+            val item = items.getJSONObject(i)
+            productItemList.add(
+                ProductItem(
+                    id = item.getString("id"),
+                    author = item.getString("authorName"),
+                    title = item.getString("title"),
+                    imageUrl = item.getJSONObject("listIcon").getString("src")
+                )
+            )
+        }
+        return productItemList
     }
 }

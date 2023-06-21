@@ -17,38 +17,48 @@ import java.io.IOException
 import java.util.Locale
 
 class PackageViewModel : ViewModel() {
+    val loading: MutableLiveData<Boolean> = MutableLiveData(false)
     val stampItems: MutableLiveData<List<StampItem>> = MutableLiveData()
 
     fun fetchStamps(packageId: String) {
+        loading.postValue(true)
         viewModelScope.launch(Dispatchers.IO) {
             val request = Request.Builder()
                 .url("https://store.line.me/stickershop/product/$packageId")
                 .header("Accept-Language", Locale.getDefault().language)
                 .build()
+
             API.okHttpClient.newCall(request).enqueue(object : Callback {
                 override fun onResponse(call: Call, response: Response) {
                     if (response.isSuccessful && response.body != null) {
-                        val stampList: ArrayList<StampItem> = ArrayList()
-                        val html = response.body!!.string()
-                        val document = Jsoup.parse(html)
-                        val elements = document.select(".FnStickerPreviewItem")
-                        elements.forEach { element ->
-                            val dataJson = JSONObject(element.dataset()["preview"]!!)
-                            stampList.add(
-                                StampItem(
-                                    id = dataJson.getString("id"),
-                                    imageUrl = dataJson.getString("staticUrl")
-                                )
-                            )
-                        }
+                        val stampList = parseResponse(response.body!!.string())
                         stampItems.postValue(stampList)
+                        loading.postValue(false)
                     }
                 }
 
                 override fun onFailure(call: Call, e: IOException) {
                     e.printStackTrace()
+                    stampItems.postValue(ArrayList())
+                    loading.postValue(false)
                 }
             })
         }
+    }
+
+    private fun parseResponse(response: String): ArrayList<StampItem> {
+        val stampList: ArrayList<StampItem> = ArrayList()
+        val document = Jsoup.parse(response)
+        val elements = document.select(".FnStickerPreviewItem")
+        elements.forEach { element ->
+            val dataJson = JSONObject(element.dataset()["preview"]!!)
+            stampList.add(
+                StampItem(
+                    id = dataJson.getString("id"),
+                    imageUrl = dataJson.getString("staticUrl")
+                )
+            )
+        }
+        return stampList
     }
 }

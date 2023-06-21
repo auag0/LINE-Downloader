@@ -19,13 +19,12 @@ class ProductListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_product_list)
 
-        val loadingDialog = AlertDialog.Builder(this, R.style.small_loading).apply {
-            setView(
-                LayoutInflater.from(this@ProductListActivity)
-                    .inflate(R.layout.dialog_small_loading, null, false)
-            )
-            setCancelable(false)
-        }.create()
+        val loadingView = LayoutInflater.from(this@ProductListActivity)
+            .inflate(R.layout.dialog_small_loading, null, false)
+        val loadingDialog = AlertDialog.Builder(this, R.style.small_loading)
+            .setView(loadingView)
+            .setCancelable(false)
+            .create()
 
         val productListAdapter = ProductListAdapter(this)
         val recyclerView: RecyclerView = findViewById(R.id.recyclerView)

@@ -2,10 +2,12 @@ package com.anago.linedownloader.ui.activities
 
 import android.os.Build
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -37,10 +39,29 @@ class PackageActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_package)
+
+        val loadingView = LayoutInflater.from(this)
+            .inflate(R.layout.dialog_small_loading, null, false)
+        val loadingDialog = AlertDialog.Builder(this, R.style.small_loading)
+            .setView(loadingView)
+            .setCancelable(false)
+            .create()
+
+        viewModel.loading.observe(this) { isLoading ->
+            if (isLoading) {
+                loadingDialog.show()
+            } else {
+                loadingDialog.dismiss()
+            }
+        }
+
         viewModel.fetchStamps(productItem.id)
 
         val icon: ImageView = findViewById(R.id.icon)
-        Glide.with(this).load(productItem.imageUrl).placeholder(R.drawable.sentiment_satisfied).into(icon)
+        Glide.with(this)
+            .load(productItem.imageUrl)
+            .placeholder(R.drawable.sentiment_satisfied)
+            .into(icon)
 
         val author: TextView = findViewById(R.id.author)
         author.text = productItem.author
