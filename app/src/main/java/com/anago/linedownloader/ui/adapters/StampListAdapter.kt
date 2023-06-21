@@ -12,15 +12,20 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.anago.linedownloader.R
+import com.anago.linedownloader.models.StampItem
 import com.bumptech.glide.Glide
 
-class StampListAdapter(private val context: Context) :
-    ListAdapter<String, StampListAdapter.ViewHolder>(object : DiffUtil.ItemCallback<String>() {
-        override fun areItemsTheSame(oldItem: String, newItem: String): Boolean {
-            return oldItem == newItem
+class StampListAdapter(
+    private val context: Context,
+    private val clickedStamp: (stamp: StampItem) -> Unit
+) :
+    ListAdapter<StampItem, StampListAdapter.ViewHolder>(object :
+        DiffUtil.ItemCallback<StampItem>() {
+        override fun areItemsTheSame(oldItem: StampItem, newItem: StampItem): Boolean {
+            return oldItem.id == newItem.id
         }
 
-        override fun areContentsTheSame(oldItem: String, newItem: String): Boolean {
+        override fun areContentsTheSame(oldItem: StampItem, newItem: StampItem): Boolean {
             return oldItem == newItem
         }
     }) {
@@ -36,9 +41,14 @@ class StampListAdapter(private val context: Context) :
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val stamp = getItem(position)
         val imageView: ImageView = holder.image
-        val imageUrl = getItem(position)
-        Glide.with(context).load(imageUrl).placeholder(R.drawable.sentiment_satisfied).into(imageView)
+        Glide.with(context).load(stamp.imageUrl).placeholder(R.drawable.sentiment_satisfied)
+            .into(imageView)
+
+        holder.itemView.setOnClickListener {
+            clickedStamp(stamp)
+        }
     }
 
     private fun getScreenWidth(): Int {

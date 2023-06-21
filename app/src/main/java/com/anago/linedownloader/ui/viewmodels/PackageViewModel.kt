@@ -3,6 +3,7 @@ package com.anago.linedownloader.ui.viewmodels
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anago.linedownloader.models.StampItem
 import com.anago.linedownloader.network.API
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,7 +17,7 @@ import java.io.IOException
 import java.util.Locale
 
 class PackageViewModel : ViewModel() {
-    val stamps: MutableLiveData<List<String>> = MutableLiveData()
+    val stampItems: MutableLiveData<List<StampItem>> = MutableLiveData()
 
     fun fetchStamps(packageId: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -27,15 +28,20 @@ class PackageViewModel : ViewModel() {
             API.okHttpClient.newCall(request).enqueue(object : Callback {
                 override fun onResponse(call: Call, response: Response) {
                     if (response.isSuccessful && response.body != null) {
-                        val stampList: ArrayList<String> = ArrayList()
+                        val stampList: ArrayList<StampItem> = ArrayList()
                         val html = response.body!!.string()
                         val document = Jsoup.parse(html)
                         val elements = document.select(".FnStickerPreviewItem")
                         elements.forEach { element ->
                             val dataJson = JSONObject(element.dataset()["preview"]!!)
-                            stampList.add(dataJson.getString("staticUrl"))
+                            stampList.add(
+                                StampItem(
+                                    id = dataJson.getString("id"),
+                                    imageUrl = dataJson.getString("staticUrl")
+                                )
+                            )
                         }
-                        stamps.postValue(stampList)
+                        stampItems.postValue(stampList)
                     }
                 }
 
