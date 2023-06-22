@@ -21,9 +21,9 @@ class ProductListViewModel : ViewModel() {
         val request = Request.Builder()
             .url(
                 if (isStamp)
-                    "https://store.line.me/api/search/sticker?query=$keyword&offset=0&limit=36&type=ALL"
+                    "https://store.line.me/api/search/sticker?query=$keyword&offset=0&limit=72&type=ALL"
                 else
-                    "https://store.line.me/api/search/emoji?query=$keyword&offset=0&limit=36&type=ALL"
+                    "https://store.line.me/api/search/emoji?query=$keyword&offset=0&limit=72&type=ALL"
             )
             .header("Accept-Language", Locale.getDefault().language)
             .build()
