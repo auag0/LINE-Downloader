@@ -45,5 +45,4 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("org.jsoup:jsoup:1.16.1")
-    implementation("androidx.preference:preference-ktx:1.2.0")
 }
