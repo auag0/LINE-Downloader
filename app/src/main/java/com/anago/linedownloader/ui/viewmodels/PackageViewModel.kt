@@ -3,6 +3,7 @@ package com.anago.linedownloader.ui.viewmodels
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.anago.linedownloader.models.PackageItem
 import com.anago.linedownloader.models.StampItem
 import com.anago.linedownloader.network.API
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +19,7 @@ import java.util.Locale
 
 class PackageViewModel : ViewModel() {
     val loading: MutableLiveData<Boolean> = MutableLiveData(false)
-    val stampItems: MutableLiveData<List<StampItem>> = MutableLiveData()
+    val packageItem: MutableLiveData<PackageItem> = MutableLiveData()
 
     fun fetchStamps(packageId: String) {
         loading.postValue(true)
@@ -31,26 +32,27 @@ class PackageViewModel : ViewModel() {
             API.okHttpClient.newCall(request).enqueue(object : Callback {
                 override fun onResponse(call: Call, response: Response) {
                     if (response.isSuccessful && response.body != null) {
-                        val stampList = parseResponse(response.body!!.string())
-                        stampItems.postValue(stampList)
+                        packageItem.postValue(
+                            parseResponse(response.body!!.string())
+                        )
                         loading.postValue(false)
                     }
                 }
 
                 override fun onFailure(call: Call, e: IOException) {
                     e.printStackTrace()
-                    stampItems.postValue(ArrayList())
+                    packageItem.postValue(PackageItem("", ArrayList()))
                     loading.postValue(false)
                 }
             })
         }
     }
 
-    private fun parseResponse(response: String): ArrayList<StampItem> {
+    private fun parseResponse(response: String): PackageItem {
         val stampList: ArrayList<StampItem> = ArrayList()
         val document = Jsoup.parse(response)
-        val elements = document.select(".FnStickerPreviewItem")
-        elements.forEach { element ->
+        val stampElements = document.select(".FnStickerPreviewItem")
+        stampElements.forEach { element ->
             val dataJson = JSONObject(element.dataset()["preview"]!!)
             stampList.add(
                 StampItem(
@@ -59,6 +61,10 @@ class PackageViewModel : ViewModel() {
                 )
             )
         }
-        return stampList
+        val descriptionElement = document.selectFirst(".mdCMN38Item01Txt")
+        return PackageItem(
+            description = descriptionElement?.text().toString(),
+            stamps = stampList
+        )
     }
 }

@@ -1,27 +1,30 @@
 package com.anago.linedownloader.ui.activities
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.anago.linedownloader.R
 import com.anago.linedownloader.models.ProductItem
 import com.anago.linedownloader.models.StampItem
-import com.anago.linedownloader.network.API.okHttpClient
 import com.anago.linedownloader.ui.adapters.StampListAdapter
 import com.anago.linedownloader.ui.viewmodels.PackageViewModel
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.Request
+import java.net.URL
+
 
 class PackageActivity : AppCompatActivity() {
     private val productItem by lazy {
@@ -69,29 +72,60 @@ class PackageActivity : AppCompatActivity() {
         val title: TextView = findViewById(R.id.title)
         title.text = productItem.title
 
+        val allDownloadBtn: Button = findViewById(R.id.allDownloadBtn)
+        allDownloadBtn.setOnClickListener {
+            saveAllImages.launch(null)
+        }
+
         val stampListAdapter = StampListAdapter(this, ::clickedStamp)
         val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = GridLayoutManager(this, 4)
         recyclerView.adapter = stampListAdapter
 
-        viewModel.stampItems.observe(this) { stamps ->
-            stampListAdapter.submitList(stamps)
+        val description: TextView = findViewById(R.id.description)
+
+        viewModel.packageItem.observe(this) { packageItem ->
+            stampListAdapter.submitList(packageItem.stamps)
+            description.text = packageItem.description
         }
     }
+
+    private val saveAllImages =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            uri?.let { safeUri ->
+                contentResolver.takePersistableUriPermission(
+                    safeUri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        val documentFile = DocumentFile.fromTreeUri(applicationContext, safeUri)
+                        viewModel.packageItem.value?.stamps?.forEach { stampItem ->
+                            val file = documentFile?.createFile("image/png", "${stampItem.id}.png")
+                            file?.let { safeFile ->
+                                contentResolver.openOutputStream(safeFile.uri, "w")?.use { out ->
+                                    URL(stampItem.imageUrl).openStream().use { inputStream ->
+                                        inputStream.copyTo(out)
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
 
     private val saveImage =
         registerForActivityResult(ActivityResultContracts.CreateDocument("image/png")) { uri ->
             uri?.let { safeUri ->
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
-                        val request = Request.Builder().url(clickedStampItem!!.imageUrl).build()
-                        val response = okHttpClient.newCall(request).execute()
-                        if (response.isSuccessful) {
-                            response.body?.use { responseBody ->
-                                contentResolver.openOutputStream(safeUri, "w")?.use { out ->
-                                    responseBody.byteStream().copyTo(out)
-                                }
-                            }
+                        contentResolver.openOutputStream(safeUri, "w")?.use { out ->
+                            URL(clickedStampItem!!.imageUrl).openStream().copyTo(out)
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()

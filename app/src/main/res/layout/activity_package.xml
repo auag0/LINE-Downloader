@@ -30,11 +30,29 @@
             app:chipStrokeColor="#bb808080" />
 
         <TextView
+            android:layout_marginStart="50dp"
+            android:layout_marginEnd="50dp"
             android:id="@+id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="26sp"
             android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/allDownloadBtn"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:text="全てダウンロード" />
+
+        <com.anago.linedownloader.ui.customviews.ExpandableTextView
+            android:id="@+id/description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
