@@ -16,10 +16,15 @@ class ProductListViewModel : ViewModel() {
     val loading: MutableLiveData<Boolean> = MutableLiveData(false)
     val productItems: MutableLiveData<ArrayList<ProductItem>> = MutableLiveData(ArrayList())
 
-    fun searchProduct(keyword: String) {
+    fun searchProduct(keyword: String, isStamp: Boolean) {
         loading.postValue(true)
         val request = Request.Builder()
-            .url("https://store.line.me/api/search/sticker?query=$keyword&offset=0&limit=36&type=ALL")
+            .url(
+                if (isStamp)
+                    "https://store.line.me/api/search/sticker?query=$keyword&offset=0&limit=36&type=ALL"
+                else
+                    "https://store.line.me/api/search/emoji?query=$keyword&offset=0&limit=36&type=ALL"
+            )
             .header("Accept-Language", Locale.getDefault().language)
             .build()
         
@@ -48,6 +53,7 @@ class ProductListViewModel : ViewModel() {
             val item = items.getJSONObject(i)
             productItemList.add(
                 ProductItem(
+                    type = item.getString("type"),
                     id = item.getString("id"),
                     author = item.getString("authorName"),
                     title = item.getString("title"),

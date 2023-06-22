@@ -21,11 +21,16 @@ class PackageViewModel : ViewModel() {
     val loading: MutableLiveData<Boolean> = MutableLiveData(false)
     val packageItem: MutableLiveData<PackageItem> = MutableLiveData()
 
-    fun fetchStamps(packageId: String) {
+    fun fetchStamps(packageId: String, isStamp: Boolean) {
         loading.postValue(true)
         viewModelScope.launch(Dispatchers.IO) {
             val request = Request.Builder()
-                .url("https://store.line.me/stickershop/product/$packageId")
+                .url(
+                    if (isStamp)
+                        "https://store.line.me/stickershop/product/$packageId"
+                    else
+                        "https://store.line.me/emojishop/product/$packageId"
+                )
                 .header("Accept-Language", Locale.getDefault().language)
                 .build()
 

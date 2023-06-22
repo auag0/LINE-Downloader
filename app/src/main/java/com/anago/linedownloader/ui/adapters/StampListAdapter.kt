@@ -17,6 +17,7 @@ import com.bumptech.glide.Glide
 
 class StampListAdapter(
     private val context: Context,
+    private val spanCount: Int,
     private val clickedStamp: (stamp: StampItem) -> Unit
 ) :
     ListAdapter<StampItem, StampListAdapter.ViewHolder>(object :
@@ -35,7 +36,7 @@ class StampListAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(context).inflate(R.layout.listitem_stamp, parent, false)
-        val imageSize = (getScreenWidth() / 4) - 1
+        val imageSize = (getScreenWidth() / spanCount) - 1
         view.layoutParams = ViewGroup.LayoutParams(imageSize, imageSize)
         return ViewHolder(view)
     }

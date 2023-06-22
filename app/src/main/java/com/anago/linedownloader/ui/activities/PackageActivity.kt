@@ -29,10 +29,12 @@ import java.net.URL
 class PackageActivity : AppCompatActivity() {
     private val productItem by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getSerializableExtra("productItem", ProductItem::class.java)!!
+            intent.getSerializableExtra("productItem", ProductItem::class.java)
+                ?: throw IllegalStateException("productItem is required")
         } else {
             @Suppress("DEPRECATION")
-            intent.getSerializableExtra("productItem")!! as ProductItem
+            intent.getSerializableExtra("productItem") as? ProductItem
+                ?: throw IllegalStateException("productItem is required")
         }
     }
 
@@ -58,7 +60,10 @@ class PackageActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.fetchStamps(productItem.id)
+        val isStamp = productItem.type == "STICKER"
+        val spanCount = if (isStamp) 4 else 5
+
+        viewModel.fetchStamps(productItem.id, isStamp)
 
         val icon: ImageView = findViewById(R.id.icon)
         Glide.with(this)
@@ -77,9 +82,12 @@ class PackageActivity : AppCompatActivity() {
             saveAllImages.launch(null)
         }
 
-        val stampListAdapter = StampListAdapter(this, ::clickedStamp)
+        val stampListAdapter = StampListAdapter(this, spanCount) { stamp ->
+            clickedStampItem = stamp
+            saveImage.launch(stamp.id)
+        }
         val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = GridLayoutManager(this, 4)
+        recyclerView.layoutManager = GridLayoutManager(this, spanCount)
         recyclerView.adapter = stampListAdapter
 
         val description: TextView = findViewById(R.id.description)
@@ -133,9 +141,4 @@ class PackageActivity : AppCompatActivity() {
                 }
             }
         }
-
-    private fun clickedStamp(stamp: StampItem) {
-        clickedStampItem = stamp
-        saveImage.launch(stamp.id)
-    }
 }
