@@ -14,6 +14,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.anago.linedownloader.R
 import com.anago.linedownloader.models.StampItem
 import com.bumptech.glide.Glide
+import com.linecorp.apng.ApngDrawable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URL
 
 class StampListAdapter(
     private val context: Context,
@@ -44,8 +50,23 @@ class StampListAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val stamp = getItem(position)
         val imageView: ImageView = holder.image
-        Glide.with(context).load(stamp.imageUrl).placeholder(R.drawable.sentiment_satisfied)
-            .into(imageView)
+
+        MainScope().launch {
+            val data: Any = if (stamp.type.startsWith("animation")) {
+                withContext(Dispatchers.IO) {
+                    URL(stamp.animationUrl).openStream().use {
+                        ApngDrawable.decode(it)
+                    }
+                }
+            } else {
+                stamp.imageUrl
+            }
+            Glide.with(context)
+                .load(data)
+                .placeholder(R.drawable.sentiment_satisfied)
+                .error(R.drawable.sentiment_satisfied)
+                .into(imageView)
+        }
 
         holder.itemView.setOnClickListener {
             clickedStamp(stamp)

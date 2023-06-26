@@ -61,8 +61,10 @@ class PackageViewModel : ViewModel() {
             val dataJson = JSONObject(element.dataset()["preview"]!!)
             stampList.add(
                 StampItem(
+                    type = dataJson.getString("type"),
                     id = dataJson.getString("id"),
-                    imageUrl = dataJson.getString("staticUrl")
+                    imageUrl = dataJson.getString("staticUrl"),
+                    animationUrl = dataJson.getString("animationUrl")
                 )
             )
         }
